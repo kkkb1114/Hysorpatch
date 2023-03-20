@@ -3,17 +3,13 @@ package kkkb1114.sampleproject.hysorpatch;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
-import android.provider.Settings;
 import android.text.Editable;
 import android.text.Selection;
 import android.text.TextWatcher;
@@ -96,7 +92,7 @@ public class MainActivity extends AppCompatActivity {
 
     /** 권한 모두 허용 되어 있으면 서비스 시작 **/
     public boolean startTestService(String s,String s2){
-        if (checkBlePermission() && checkStoragePermission()){
+        if (checkBlePermission()){
             Intent serviceIntent = new Intent(this, TestService.class);
             serviceIntent.putExtra("key",s);
             serviceIntent.putExtra("type",s2);
@@ -208,43 +204,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * 저장소 권한 체크
-     **/
-    public boolean checkStoragePermission() {
-        Log.e("checkStoragePermission", "시작");
-        // 권한 체크 (만약 권한이 허용되어있지 않으면 권한 요청)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            Log.e("checkStoragePermission", "TIRAMISU");
-            if (Environment.isExternalStorageManager()) {
-                Log.e("checkStoragePermission", "TIRAMISU_true");
-                return true;
-            } else {
-                Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
-                Uri uri = Uri.fromParts("package", context.getPackageName(), null);
-                intent.setData(uri);
-                context.startActivity(intent);
-                Log.e("checkStoragePermission", "TIRAMISU_false");
-                return false;
-            }
-        }else {
-            Log.e("checkStoragePermission", "TIRAMISU_이하");
-            if (!(permissionManager.permissionCheck(this, android.Manifest.permission.READ_EXTERNAL_STORAGE) ||
-                    permissionManager.permissionCheck(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE))) {
-
-                Log.e("checkStoragePermission", "TIRAMISU_이하_false");
-                permissionManager.requestPermission(context,1, new String[]{
-                        android.Manifest.permission.READ_EXTERNAL_STORAGE,
-                        android.Manifest.permission.WRITE_EXTERNAL_STORAGE
-                });
-                return false;
-            }else {
-                Log.e("checkStoragePermission", "TIRAMISU_이하_true");
-                return true;
-            }
-        }
-    }
-
     /** 권한 요청 결과 처리 메서드 **/
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -253,21 +212,10 @@ public class MainActivity extends AppCompatActivity {
             case PermissionManager.PERMISSION_REQUEST_LOCATION_CODE:
             case PermissionManager.PERMISSION_REQUEST_CODE_LOCATION_S:
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    // 권한이 허용되었을 때 실행할 코드 (위치 다음은 저장소 권한 요청)
-                    checkStoragePermission();
-                } else {
-                    // 권한이 거부되었을 때 실행할 코드
-                    Toast.makeText(this, "권한이 거부 되어있으면 기능을 이용하실 수 없습니다.", Toast.LENGTH_SHORT).show();
-                }
-                break;
-
-            case PermissionManager.PERMISSION_REQUEST_STORAGE_CODE:
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // 권한이 허용되었을 때 실행할 코드
-
                 } else {
                     // 권한이 거부되었을 때 실행할 코드
-                    Toast.makeText(this, "권한이 거부 되어있으면 기능을 이용하실 수 없습니다.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "위치 권한이 거부 되어있으면 기능을 이용하실 수 없습니다.", Toast.LENGTH_SHORT).show();
                 }
                 break;
         }

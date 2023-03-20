@@ -82,12 +82,12 @@ public class TestService extends Service {
 
     public int onStartCommand(Intent intent, int flags, int startId) {
 
+        Log.e("TestService", "onStartCommand");
         Maddress = intent.getStringExtra("key");
         initView(Maddress);
         type = intent.getStringExtra("type");
         MeasurBodyTempreture(type);
         return Service.START_STICKY;
-
     }
 
     @Override
@@ -95,6 +95,7 @@ public class TestService extends Service {
         super.onCreate();
         context = this;
 
+        Log.e("TestService", "onCreate");
         createNotificationChannel();
 
         // 이동하려는 액티비티를 작성해준다.
@@ -119,6 +120,12 @@ public class TestService extends Service {
                 .setContentIntent(pendingIntent)
                 .build();
         startForeground(NOTIFICATION_ID, notification);
+
+
+        long now = System.currentTimeMillis();
+        Date date = new Date(now);
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
+        String nowTime = simpleDateFormat.format(date);
     }
 
 
@@ -149,99 +156,6 @@ public class TestService extends Service {
                 }
             }
         }).start();
-    }
-
-    /**
-     * 블루투스 스캔 결과 저장
-     **/
-    public void setSaveText(String data, String nowTime) {
-        try {
-            saveData = data;
-            // 파일 생성
-            File storeageFile = new File(Environment.getExternalStorageDirectory().getAbsolutePath());
-            // 폴더 생성
-            if (!storeageFile.exists()) { // 폴더 없으면
-                storeageFile.mkdir(); // 폴더 생성
-            }
-
-            String textFileName = "/hysorpatch_TestData.txt";
-
-            BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(storeageFile + textFileName, false));
-            bufferedWriter.append("[날짜: " + nowTime + "]" + "\n[온도: " + saveData.split(":")[2] + "]"
-                    + "\n[습도: " + saveData.split(":")[3] + "]" + "\n[배터리: " + saveData.split(":")[1] + "]"); //TODO 날짜 쓰기
-            bufferedWriter.newLine();
-            bufferedWriter.close();
-
-            saveStorage = String.valueOf(storeageFile + textFileName);
-            PreferenceManager.setString(getApplication(), "saveStorage", String.valueOf(saveStorage)); //TODO 프리퍼런스에 경로 저장한다
-
-            Log.d("---", "---");
-            Log.w("//===========//", "================================================");
-            Log.d("", "\n" + "[A_TextFile > 저장한 텍스트 파일 확인_저장]");
-            Log.d("", "\n" + "[경로 : " + String.valueOf(saveStorage) + "]");
-            Log.d("", "\n" + "[저장 시간 : " + String.valueOf(nowTime) + "]");
-            Log.d("", "\n" + "[온도 : " + saveData.split(":")[2] + "]");
-            Log.d("", "\n" + "[습도 : " + saveData.split(":")[3] + "]");
-            Log.d("", "\n" + "[배터리 : " + saveData.split(":")[1] + "]");
-            Log.w("//===========//", "================================================");
-            Log.d("---", "---");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * 블루투스 스캔 결과 기존 파일 불러서 이어서 저장
-     **/
-    public void getFile_saveText(String saveData, String saveStorage, String nowTime) {
-        try {
-            File file = new File(saveStorage);
-
-            FileWriter fileWriter = new FileWriter(file, true); // true면 파일 끝에 data 추가됨
-
-            BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
-
-            bufferedWriter.append("[날짜: " + nowTime + "]" + "\n[온도: " + saveData.split(":")[2] + "]"
-                    + "\n[습도: " + saveData.split(":")[3] + "]" + "\n[배터리: " + saveData.split(":")[1] + "]"); //TODO 날짜 쓰기
-            bufferedWriter.newLine(); // 개행 문자 추가
-
-            Log.d("---", "---");
-            Log.w("//===========//", "================================================");
-            Log.d("", "\n" + "[A_TextFile > 저장한 텍스트 파일 확인_추가]");
-            Log.d("", "\n" + "[경로 : " + String.valueOf(saveStorage) + "]");
-            Log.d("", "\n" + "[저장 시간 : " + String.valueOf(nowTime) + "]");
-            Log.d("", "\n" + "[온도 : " + saveData.split(":")[2] + "]");
-            Log.d("", "\n" + "[습도 : " + saveData.split(":")[3] + "]");
-            Log.d("", "\n" + "[배터리 : " + saveData.split(":")[1] + "]");
-            Log.w("//===========//", "================================================");
-            Log.d("---", "---");
-
-            bufferedWriter.close();
-            fileWriter.close();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * 경로에 파일 정말 없는지 확인
-     **/
-    public boolean checkFile() { // 쉐어드는 없고 파일은 있을수 있어서 추가
-        File storeageFile = new File(Environment.getExternalStorageDirectory().getAbsolutePath());
-        // 폴더 생성
-        if (!storeageFile.exists()) { // 폴더 없으면
-            storeageFile.mkdir(); // 폴더 생성
-        }
-        String textFileName = "/hysorpatch_TestData.txt";
-        saveStorage = String.valueOf(storeageFile + textFileName);
-        File file = new File(saveStorage);
-
-        if (file.exists()) { // 있으면
-            return true;
-        } else { // 없으면
-            return false;
-        }
     }
 
 
@@ -378,16 +292,7 @@ public class TestService extends Service {
                             SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
                             String nowTime = simpleDateFormat.format(date);
 
-                            if (saveStorage == null || saveStorage.trim().isEmpty()) { // 없으면
-
-                                if (checkFile()) { // 있으면
-                                    getFile_saveText(TestService.this.mDeviceName, saveStorage, nowTime);
-                                } else { // 없으면
-                                    setSaveText(TestService.this.mDeviceName, nowTime);
-                                }
-                            } else { // 있으면
-                                getFile_saveText(TestService.this.mDeviceName, saveStorage, nowTime);
-                            }
+                            //todo 여기에 저장했음======================================================================================
 
                             if (result.getDevice().getName() != null) {
                                 Log.e("222222222222", (TestService.this.mDeviceName));
@@ -406,29 +311,33 @@ public class TestService extends Service {
     /**
      * 블루투스 주변 기기 검색 권한 체크
      **/
-    public void checkBlePermission() {
+    public boolean checkBlePermission() {
         // 권한 체크 (만약 권한이 허용되어있지 않으면 권한 요청)
-        if (!(permissionManager.permissionCheck(context, android.Manifest.permission.ACCESS_FINE_LOCATION) ||
-                permissionManager.permissionCheck(context, android.Manifest.permission.ACCESS_COARSE_LOCATION) ||
-                permissionManager.permissionCheck(context, android.Manifest.permission.ACCESS_BACKGROUND_LOCATION))) {
-
-            permissionManager.requestPermission(context,0, new String[]{
-                    android.Manifest.permission.ACCESS_FINE_LOCATION,
-                    android.Manifest.permission.ACCESS_COARSE_LOCATION,
-                    android.Manifest.permission.ACCESS_BACKGROUND_LOCATION
-            });
-        }
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (!(permissionManager.permissionCheck(context, android.Manifest.permission.BLUETOOTH_CONNECT) ||
-                    permissionManager.permissionCheck(context, android.Manifest.permission.BLUETOOTH_SCAN) ||
-                    permissionManager.permissionCheck(context, android.Manifest.permission.BLUETOOTH))) {
+            if (!(permissionManager.permissionCheck(this, android.Manifest.permission.BLUETOOTH_CONNECT) ||
+                    permissionManager.permissionCheck(this, android.Manifest.permission.BLUETOOTH_SCAN))) {
+
+                permissionManager.requestPermission(context, 0, new String[]{
+                        android.Manifest.permission.BLUETOOTH_CONNECT,
+                        android.Manifest.permission.BLUETOOTH_SCAN
+                });
+                return false;
+            }else {
+                return true;
+            }
+        }else {
+            if (!(permissionManager.permissionCheck(this, android.Manifest.permission.ACCESS_FINE_LOCATION) ||
+                    permissionManager.permissionCheck(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) ||
+                    permissionManager.permissionCheck(this, android.Manifest.permission.ACCESS_BACKGROUND_LOCATION))) {
 
                 permissionManager.requestPermission(context,0, new String[]{
-                        android.Manifest.permission.BLUETOOTH_CONNECT,
-                        android.Manifest.permission.BLUETOOTH_SCAN,
-                        Manifest.permission.BLUETOOTH
+                        android.Manifest.permission.ACCESS_FINE_LOCATION,
+                        android.Manifest.permission.ACCESS_COARSE_LOCATION,
+                        android.Manifest.permission.ACCESS_BACKGROUND_LOCATION
                 });
+                return false;
+            }else {
+                return true;
             }
         }
     }

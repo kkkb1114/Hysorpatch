@@ -13,9 +13,9 @@
     <!-- Required only if your app targets Android 13. -->
     <!-- Declare one or more the following permissions only if your app needs
     to access data thats protected by them. -->
-    <!--<uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
-    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />-->
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
 
     <uses-permission android:name="android.permission.BLUETOOTH"
         android:maxSdkVersion="30"/>
