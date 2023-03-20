@@ -185,6 +185,7 @@ public class MainActivity extends AppCompatActivity {
                 return false;
             }else {
                 Log.e("checkBlePermission", "S_true");
+                checkNotificationPermission();
                 return true;
             }
         }else {
