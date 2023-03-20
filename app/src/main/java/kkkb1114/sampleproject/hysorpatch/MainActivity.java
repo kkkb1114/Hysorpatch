@@ -204,6 +204,30 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * 알람 권한 체크
+     **/
+    public boolean checkNotificationPermission() {
+        Log.e("checkNotificationPermission", "시작");
+        // 권한 체크 (만약 권한이 허용되어있지 않으면 권한 요청)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            Log.e("checkNotificationPermission", "TIRAMISU");
+            if (!(permissionManager.permissionCheck(this, android.Manifest.permission.POST_NOTIFICATIONS))) {
+
+                Log.e("checkNotificationPermission", "TIRAMISU_false");
+                permissionManager.requestPermission(context, 1, new String[]{
+                        android.Manifest.permission.POST_NOTIFICATIONS
+                });
+
+                return false;
+            }else {
+                Log.e("checkNotificationPermission", "TIRAMISU_true");
+                return true;
+            }
+        }
+        return true;
+    }
+
     /** 권한 요청 결과 처리 메서드 **/
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -213,9 +237,18 @@ public class MainActivity extends AppCompatActivity {
             case PermissionManager.PERMISSION_REQUEST_CODE_LOCATION_S:
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // 권한이 허용되었을 때 실행할 코드
+                    checkNotificationPermission();
                 } else {
                     // 권한이 거부되었을 때 실행할 코드
                     Toast.makeText(this, "위치 권한이 거부 되어있으면 기능을 이용하실 수 없습니다.", Toast.LENGTH_SHORT).show();
+                }
+                break;
+            case PermissionManager.PERMISSION_REQUEST_CODE_POST_NOTIFICATIONS:
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // 권한이 허용되었을 때 실행할 코드
+                } else {
+                    // 권한이 거부되었을 때 실행할 코드
+                    Toast.makeText(this, "알림 권한이 거부 되어있으면 서비스 동작 상태를 확인하실 수 없습니다.", Toast.LENGTH_SHORT).show();
                 }
                 break;
         }
