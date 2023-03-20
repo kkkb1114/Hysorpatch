@@ -20,6 +20,7 @@ import android.bluetooth.le.ScanSettings;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Environment;
@@ -71,6 +72,9 @@ public class TestService extends Service {
     private String Maddress;
     String type;
 
+    public static DBHelper dbHelper;
+    SQLiteDatabase sqlDB;
+
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
@@ -86,6 +90,7 @@ public class TestService extends Service {
         Maddress = intent.getStringExtra("key");
         initView(Maddress);
         type = intent.getStringExtra("type");
+
         MeasurBodyTempreture(type);
         return Service.START_STICKY;
     }
@@ -97,6 +102,10 @@ public class TestService extends Service {
 
         Log.e("TestService", "onCreate");
         createNotificationChannel();
+
+        dbHelper = DBHelper.getInstance(context, "data.db", null, 1);
+        sqlDB = TestService.dbHelper.getWritableDatabase();
+
 
         // 이동하려는 액티비티를 작성해준다.
         Intent notificationIntent = new Intent(getApplicationContext(), MainActivity.class);
@@ -114,6 +123,7 @@ public class TestService extends Service {
         }
 
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+
                 .setContentTitle("서비스 앱")
                 .setContentText("서비스 앱 동작 중")
                 .setSmallIcon(R.drawable.ic_launcher_background)
@@ -131,6 +141,7 @@ public class TestService extends Service {
 
     public void initView(String Maddress) {
         try {
+            dbHelper = DBHelper.getInstance(context, "data.db", null, 1);
             scanFilters = new ArrayList<>();
             ScanFilter scanFilter = new ScanFilter.Builder()
                     .setDeviceAddress(Maddress)
@@ -291,7 +302,7 @@ public class TestService extends Service {
                             Date date = new Date(now);
                             SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
                             String nowTime = simpleDateFormat.format(date);
-
+                            sqlDB.execSQL("INSERT INTO TEMPDATA VALUES ('" + nowTime + "', '" + saveData.split(":")[1] + "', '" + saveData.split(":")[2] + "','" + saveData.split(":")[3] + "');");
                             //todo 여기에 저장했음======================================================================================
 
                             if (result.getDevice().getName() != null) {
