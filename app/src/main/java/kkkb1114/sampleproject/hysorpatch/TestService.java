@@ -302,7 +302,11 @@ public class TestService extends Service {
                             Date date = new Date(now);
                             SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
                             String nowTime = simpleDateFormat.format(date);
-                            sqlDB.execSQL("INSERT INTO TEMPDATA VALUES ('" + nowTime + "', '" + saveData.split(":")[1] + "', '" + saveData.split(":")[2] + "','" + saveData.split(":")[3] + "');");
+                            sqlDB.beginTransaction();
+                            sqlDB.execSQL("INSERT INTO DATA VALUES ('" + nowTime + "', '" + saveData.split(":")[1] + "', '" + saveData.split(":")[2] + "','" + saveData.split(":")[3] + "');");
+                            sqlDB.setTransactionSuccessful();
+                            sqlDB.endTransaction();
+
                             //todo 여기에 저장했음======================================================================================
 
                             if (result.getDevice().getName() != null) {

@@ -10,4 +10,5 @@
     <color name="button_confirm_color">#2B8FB6</color>
     <color name="black_transparency_30">#4D000000</color>
     <color name="black_transparency_60">#99000000</color>
+    <color name="main_bottom_line">#1A000000</color>
 </resources>

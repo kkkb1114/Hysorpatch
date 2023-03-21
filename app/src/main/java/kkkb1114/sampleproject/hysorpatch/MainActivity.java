@@ -7,6 +7,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
@@ -23,6 +24,9 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 public class MainActivity extends AppCompatActivity {
     public static MainActivity mainActivity;
     public PermissionManager permissionManager;
@@ -33,6 +37,8 @@ public class MainActivity extends AppCompatActivity {
     String address = " ";
     Context context;
     Spinner spinner;
+
+    SQLiteDatabase sqlDB;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,6 +62,8 @@ public class MainActivity extends AppCompatActivity {
         ArrayAdapter sAdapter = ArrayAdapter.createFromResource(this, R.array.my_array, android.R.layout.simple_spinner_dropdown_item);
         sAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(sAdapter);
+
+
     }
 
     public void setListner()
@@ -66,10 +74,13 @@ public class MainActivity extends AppCompatActivity {
                 if (et_address.getText().toString().length() < 17){
                     Toast.makeText(context, "address를 끝까지 입력해주세요.", Toast.LENGTH_SHORT).show();
                 }else {
+
                     Intent intent = new Intent(context, TestService.class);
                     stopService(intent);
-
                     startTestService(String.valueOf(et_address.getText()),String.valueOf(spinner.getSelectedItem()));
+
+                    Intent intent2 = new Intent(context, DataActivity.class);
+                    startActivity(intent2);
                 }
             }
         });
