@@ -11,6 +11,7 @@ public class PermissionManager {
 
     public static final int PERMISSION_REQUEST_LOCATION_CODE = 100;
     public static final int PERMISSION_REQUEST_CODE_LOCATION_S = 101;
+    public static final int PERMISSION_REQUEST_CODE_POST_NOTIFICATIONS = 102;
 
     /** 권한 확인 **/
     // 기기 SDK 확인을 여기서 안하기 때문에 사용하기전에 SDK 확인 필요하다.
@@ -36,6 +37,11 @@ public class PermissionManager {
                     ActivityCompat.requestPermissions(MainActivity.getActivity(), strPermissions, PERMISSION_REQUEST_LOCATION_CODE);
                 }
 
+            }else if (request_permission_type == 1){
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
+                    Log.e("checkBlePermission", "requestPermission_TIRAMISU");
+                    ActivityCompat.requestPermissions(MainActivity.getActivity(), strPermissions, PERMISSION_REQUEST_CODE_POST_NOTIFICATIONS);
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
