@@ -284,13 +284,13 @@ public class TestService extends Service {
                         }
 
                         saveStorage = PreferenceManager.getString(context, "saveStorage");
-                        processResultSave(result);
+                        processResultSave(result,scanRecord.getDeviceName());
                     }
                 }
             }
 
             /** 블루투스 스캔 결과 저장 로직_1 **/
-            private void processResultSave(final ScanResult result) {
+            private void processResultSave(final ScanResult result, String save) {
                 Handler handler = new Handler(Looper.getMainLooper());
                 handler.post(new Runnable() {
                     @Override
@@ -303,7 +303,7 @@ public class TestService extends Service {
                             SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
                             String nowTime = simpleDateFormat.format(date);
                             sqlDB.beginTransaction();
-                            sqlDB.execSQL("INSERT INTO DATA VALUES ('" + nowTime + "', '" + saveData.split(":")[1] + "', '" + saveData.split(":")[2] + "','" + saveData.split(":")[3] + "');");
+                            sqlDB.execSQL("INSERT INTO DATA VALUES ('" + nowTime + "', '" + save.split(":")[1] + "', '" + save.split(":")[2] + "','" + save.split(":")[3] + "');");
                             sqlDB.setTransactionSuccessful();
                             sqlDB.endTransaction();
 
