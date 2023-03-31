@@ -31,6 +31,7 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 
 import java.io.BufferedWriter;
@@ -60,7 +61,6 @@ public class TestService extends Service {
     private ArrayList<ScanFilter> scanFilters;
     private ScanSettings mSettings;
     Context context;
-    Handler handler = new Handler();
 
     // 다른 로직
     private static final String TAG = "HysorPatchSearching";
@@ -83,16 +83,16 @@ public class TestService extends Service {
     }
 
     @Override
-
     public int onStartCommand(Intent intent, int flags, int startId) {
 
         Log.e("TestService", "onStartCommand");
+        Log.e("key_onStartCommand", intent.getStringExtra("key"));
         Maddress = intent.getStringExtra("key");
         initView(Maddress);
         type = intent.getStringExtra("type");
 
         MeasurBodyTempreture(type);
-        return Service.START_STICKY;
+        return Service.START_NOT_STICKY;
     }
 
     @Override
@@ -104,7 +104,7 @@ public class TestService extends Service {
         createNotificationChannel();
 
         dbHelper = DBHelper.getInstance(context, "data.db", null, 1);
-        sqlDB = TestService.dbHelper.getWritableDatabase();
+        sqlDB = dbHelper.getWritableDatabase();
 
 
         // 이동하려는 액티비티를 작성해준다.
@@ -123,19 +123,12 @@ public class TestService extends Service {
         }
 
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
-
                 .setContentTitle("서비스 앱")
                 .setContentText("서비스 앱 동작 중")
                 .setSmallIcon(R.drawable.ic_launcher_background)
                 .setContentIntent(pendingIntent)
                 .build();
         startForeground(NOTIFICATION_ID, notification);
-
-
-        long now = System.currentTimeMillis();
-        Date date = new Date(now);
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
-        String nowTime = simpleDateFormat.format(date);
     }
 
 
@@ -234,24 +227,27 @@ public class TestService extends Service {
      **/
     public void setBLEScanCallback(String s) {
         String FD = s;
-        Log.d("Type",s);
+        Log.d("Type", s);
         this.mScanCallback = new ScanCallback() {
             @Override
             public void onScanResult(int callbackType, ScanResult result) {
                 super.onScanResult(callbackType, result);
                 checkBlePermission();
 
-                processResultFilter(result);
+                processResultFilter(result, FD);
             }
 
             @Override
             public void onBatchScanResults(List<ScanResult> results) {
                 super.onBatchScanResults(results);
+                // 스캔된 결과값이 여러개면 동작하기에 일단 주석처리 함.
+                /*Log.e("setBLEScanCallback", "onBatchScanResults");
+                Log.e("aaaaaa_service", aaaaaa);
                 checkBlePermission();
 
                 for (ScanResult result : results) {
-                    processResultFilter(result);
-                }
+                    processResultFilter(result, FD);
+                }*/
             }
 
             @Override
@@ -259,69 +255,67 @@ public class TestService extends Service {
                 super.onScanFailed(errorCode);
 
             }
-
-            /** 블루투스 스캔 결과 필터 **/
-            public void processResultFilter(ScanResult result) {
-                String trim;
-                ScanRecord scanRecord = result.getScanRecord();
-                TestService.this.mDeviceName = scanRecord.getDeviceName();
-                TestService.this.mRssi = result.getRssi(); // 기기와의 신호 세기
-                TestService.this.mDevice = result.getDevice();
-                Log.i(TestService.TAG, "deviceName = " + TestService.this.mDeviceName);
-
-                if (TestService.this.mDeviceName != null) {
-                    Log.e("11111111111", (TestService.this.mDeviceName));
-                    if (TestService.this.mDeviceName.contains(FD)) {
-                        TestService.this.mDevice.getAddress().split(":");
-                        if (!TestService.this.mDeviceName.contains(":")) {
-                            trim = TestService.this.mDeviceName.trim();
-                        } else {
-                            trim = TestService.this.mDeviceName.split(":")[0];
-                        }
-                        Log.d(TestService.TAG, "deviceName = " + TestService.this.mDeviceName + ", address = " + TestService.this.mDevice.getAddress() + ", containsKey = " + TestService.this.mRegisteredDevice.containsKey(TestService.this.mDevice.getAddress()) + ", comingDeviceName = " + trim);
-                        if (TestService.this.mRegisteredDevice.containsKey(TestService.this.mDevice.getAddress())) {
-                            return;
-                        }
-
-                        saveStorage = PreferenceManager.getString(context, "saveStorage");
-                        processResultSave(result,scanRecord.getDeviceName());
-                    }
-                }
-            }
-
-            /** 블루투스 스캔 결과 저장 로직_1 **/
-            private void processResultSave(final ScanResult result, String save) {
-                Handler handler = new Handler(Looper.getMainLooper());
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        checkBlePermission();
-                        if (result != null) {
-                            // 저장
-                            long now = System.currentTimeMillis();
-                            Date date = new Date(now);
-                            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
-                            String nowTime = simpleDateFormat.format(date);
-                            sqlDB.beginTransaction();
-                            sqlDB.execSQL("INSERT INTO DATA VALUES ('" + nowTime + "', '" + save.split(":")[1] + "', '" + save.split(":")[2] + "','" + save.split(":")[3] + "');");
-                            sqlDB.setTransactionSuccessful();
-                            sqlDB.endTransaction();
-
-                            //todo 여기에 저장했음======================================================================================
-
-                            if (result.getDevice().getName() != null) {
-                                Log.e("222222222222", (TestService.this.mDeviceName));
-                            }
-                            if (result.getDevice().getAddress() != null) {
-                                Log.e("3333333333", result.getDevice().getAddress());
-                            }
-                        }
-                    }
-                });
-            }
         };
     }
 
+    /** 블루투스 스캔 결과 필터 **/
+    public void processResultFilter(ScanResult result, String FD) {
+        String trim;
+        ScanRecord scanRecord = result.getScanRecord();
+        TestService.this.mDeviceName = scanRecord.getDeviceName();
+        TestService.this.mRssi = result.getRssi(); // 기기와의 신호 세기
+        TestService.this.mDevice = result.getDevice();
+        Log.i(TestService.TAG, "deviceName = " + TestService.this.mDeviceName);
+
+        if (TestService.this.mDeviceName != null) {
+            Log.e("11111111111", (TestService.this.mDeviceName));
+            if (TestService.this.mDeviceName.contains(FD)) {
+                TestService.this.mDevice.getAddress().split(":");
+                if (!TestService.this.mDeviceName.contains(":")) {
+                    trim = TestService.this.mDeviceName.trim();
+                } else {
+                    trim = TestService.this.mDeviceName.split(":")[0];
+                }
+                Log.d(TestService.TAG, "deviceName = " + TestService.this.mDeviceName + ", address = " + TestService.this.mDevice.getAddress() + ", containsKey = " + TestService.this.mRegisteredDevice.containsKey(TestService.this.mDevice.getAddress()) + ", comingDeviceName = " + trim);
+                if (TestService.this.mRegisteredDevice.containsKey(TestService.this.mDevice.getAddress())) {
+                    return;
+                }
+
+                saveStorage = PreferenceManager.getString(context, "saveStorage");
+                processResultSave(result, scanRecord.getDeviceName());
+            }
+        }
+    }
+
+    /** 블루투스 스캔 결과 저장 로직_1 **/
+    private void processResultSave(final ScanResult result, String save) {
+        Handler handler = new Handler(Looper.getMainLooper());
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                checkBlePermission();
+                if (result != null) {
+                    // 저장
+                    long now = System.currentTimeMillis();
+                    Date date = new Date(now);
+                    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
+                    String nowTime = simpleDateFormat.format(date);
+                    sqlDB.beginTransaction();
+                    sqlDB.execSQL("INSERT INTO DATA VALUES ('" + nowTime + "', '" + save.split(":")[1] + "', '" + save.split(":")[2] + "','" + save.split(":")[3] + "');");
+                    sqlDB.setTransactionSuccessful();
+                    sqlDB.endTransaction();
+                    //todo 여기에 저장했음======================================================================================
+
+                    if (result.getDevice().getName() != null) {
+                        Log.e("222222222222", (TestService.this.mDeviceName));
+                    }
+                    if (result.getDevice().getAddress() != null) {
+                        Log.e("3333333333", result.getDevice().getAddress());
+                    }
+                }
+            }
+        });
+    }
 
     /**
      * 블루투스 주변 기기 검색 권한 체크
@@ -337,21 +331,21 @@ public class TestService extends Service {
                         android.Manifest.permission.BLUETOOTH_SCAN
                 });
                 return false;
-            }else {
+            } else {
                 return true;
             }
-        }else {
+        } else {
             if (!(permissionManager.permissionCheck(this, android.Manifest.permission.ACCESS_FINE_LOCATION) ||
                     permissionManager.permissionCheck(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) ||
                     permissionManager.permissionCheck(this, android.Manifest.permission.ACCESS_BACKGROUND_LOCATION))) {
 
-                permissionManager.requestPermission(context,0, new String[]{
+                permissionManager.requestPermission(context, 0, new String[]{
                         android.Manifest.permission.ACCESS_FINE_LOCATION,
                         android.Manifest.permission.ACCESS_COARSE_LOCATION,
                         android.Manifest.permission.ACCESS_BACKGROUND_LOCATION
                 });
                 return false;
-            }else {
+            } else {
                 return true;
             }
         }
@@ -360,6 +354,9 @@ public class TestService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-
+        checkBlePermission();
+        mScanner.stopScan(mScanCallback);
+        stopSelf();
+        dbHelper.closeDBHelper();
     }
 }

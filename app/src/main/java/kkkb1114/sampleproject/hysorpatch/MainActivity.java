@@ -38,6 +38,8 @@ public class MainActivity extends AppCompatActivity {
     Context context;
     Spinner spinner;
 
+    private static Intent serviceIntent;
+
     SQLiteDatabase sqlDB;
 
     @Override
@@ -76,15 +78,15 @@ public class MainActivity extends AppCompatActivity {
                 }else {
 
                     Intent intent = new Intent(context, TestService.class);
-                    stopService(intent);
+                    context.stopService(intent);
+                    // 만약 기존에 생성한 serviceIntent가 있다면 null 초기화 한다.
+                    if (serviceIntent != null){
+                        serviceIntent = null;
+                    }
                     startTestService(String.valueOf(et_address.getText()),String.valueOf(spinner.getSelectedItem()));
-
-                    Intent intent2 = new Intent(context, DataActivity.class);
-                    startActivity(intent2);
                 }
             }
         });
-
 
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -104,7 +106,9 @@ public class MainActivity extends AppCompatActivity {
     /** 권한 모두 허용 되어 있으면 서비스 시작 **/
     public boolean startTestService(String s,String s2){
         if (checkBlePermission()){
-            Intent serviceIntent = new Intent(this, TestService.class);
+            serviceIntent = new Intent(this, TestService.class);
+            Log.e("key", s);
+            Log.e("type", s2);
             serviceIntent.putExtra("key",s);
             serviceIntent.putExtra("type",s2);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -112,6 +116,9 @@ public class MainActivity extends AppCompatActivity {
             }else {
                 startService(serviceIntent);
             }
+            // 화면 이동
+            Intent intent2 = new Intent(context, DataActivity.class);
+            startActivity(intent2);
             return true;
         }else {
             checkBlePermission();
