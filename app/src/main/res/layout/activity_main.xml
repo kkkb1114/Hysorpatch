@@ -69,5 +69,15 @@
         android:text="Service 시작"
         android:textColor="@color/white" />
 
+    <Button
+        android:id="@+id/bt_serviceStop"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:background="@drawable/rounded_corners_red"
+        android:padding="10dp"
+        android:text="Service 종료"
+        android:textColor="@color/white" />
+
 
 </LinearLayout>

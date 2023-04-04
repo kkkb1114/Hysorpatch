@@ -31,7 +31,7 @@ public class MainActivity extends AppCompatActivity {
     public static MainActivity mainActivity;
     public PermissionManager permissionManager;
 
-    Button serviceBtn;
+    Button serviceBtn, bt_serviceStop;
 
     EditText et_address;
     String address = " ";
@@ -59,6 +59,7 @@ public class MainActivity extends AppCompatActivity {
     public void initView()
     {
         serviceBtn = (Button) findViewById(R.id.bt_serviceStart);
+        bt_serviceStop = (Button) findViewById(R.id.bt_serviceStop);
         et_address = (EditText) findViewById(R.id.et_address);
         spinner = (Spinner)findViewById(R.id.spinner);
         ArrayAdapter sAdapter = ArrayAdapter.createFromResource(this, R.array.my_array, android.R.layout.simple_spinner_dropdown_item);
@@ -85,6 +86,14 @@ public class MainActivity extends AppCompatActivity {
                     }
                     startTestService(String.valueOf(et_address.getText()),String.valueOf(spinner.getSelectedItem()));
                 }
+            }
+        });
+
+        bt_serviceStop.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(context, TestService.class);
+                context.stopService(intent);
             }
         });
 
